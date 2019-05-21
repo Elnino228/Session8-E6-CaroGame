@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="E6-CaroGame.css">
+</head>
+<body>
+<p id="gameBoard"></p>
+<script>
+    const ROWS = 20;
+    const COLUMNS = 20;
+    const CELL_SIZE = 30;
+    const WIN = 5;
+    const VALUE_X = 'X';
+    const VALUE_O = 'O';
+    var Cell = function (x, y) {
+        this.x = x;
+        this.y = y;
+        this.value = '';
+        this.getHTML = function () {
+            let top = this.x * CELL_SIZE;
+            let left = this.y * CELL_SIZE;
+            return '<div id="cell' + this.x + '-' + this.y + '"' + ' class="cell"' + ' onclick="play(' + this.x + ',' + this.y + ')"' +
+                ' style="position: absolute; width:' + CELL_SIZE + 'px;height:' + CELL_SIZE + 'px; left:' + left + 'px; top:' + top + 'px; line-height:' + CELL_SIZE + 'px"></div>';
+        }
+    };
+    let GameBoard = function (rows, cols) {
+        this.rows = rows;
+        this.cols = cols;
+        this.cells = [];
+        this.turn = VALUE_X;
+        this.win = false;
+        this.draw = function () {
+            let board = '';
+            for (let i = 0; i < this.rows; i++) {
+                let row = [];
+                for (let j = 0; j < this.cols; j++) {
+                    let cell = new Cell(i, j);
+                    board += cell.getHTML();
+                    row.push(cell);
+                }
+                this.cells.push(row);
+            }
+            document.getElementById('gameBoard').innerHTML = board;
+        };
+        this.play = function (x, y) {
+            if (this.win) return;
+            let cellDiv = document.getElementById('cell' + x + '-' + y);
+            if (this.cells[x][y].value !== '') {
+                alert('This cell is played');
+            } else {
+                cellDiv.innerHTML = this.turn;
+                this.cells[x][y].value = this.turn;
+                this.check(x, y, 'Player ' + this.turn);
+                this.turn = (this.turn == VALUE_X) ? VALUE_O : VALUE_X;
+            }
+        };
+        this.check = function (x, y, player) {
+            let currentCell = this.cells[x][y];
+            let isBlockTwoHead;
+            let isBlockFront = false;
+            let isBlockBack = false;
+            //check Horizontal
+            let count = 1;
+            let i = 1;
+            while (y - i >= 0) {
+                if (this.cells[x][y - i].value === currentCell.value) {
+                    count++;
+                } else if (this.cells[x][y - i].value !== currentCell.value && this.cells[x][y - i].value !== '') {
+                    isBlockFront = true;
+                }
+                i++;
+            }
+            i = 1;
+            while (y + i < this.cols) {
+                if (this.cells[x][y + i].value === currentCell.value) {
+                    count++;
+                } else if (this.cells[x][y + i].value !== currentCell.value && this.cells[x][y + i].value !== '') {
+                    isBlockBack = true;
+                }
+                i++;
+            }
+            isBlockTwoHead = isBlockFront && isBlockBack;
+            this.endGame(isBlockTwoHead,count, player);
+            //check Vertical
+            count = 1;
+            i = 1;
+            while (x - i >= 0) {
+                if (this.cells[x - i][y].value === currentCell.value) {
+                    count++;
+                } else if (this.cells[x - i][y].value !== currentCell.value && this.cells[x - i][y].value !== '') {
+                    isBlockFront = true;
+                }
+                i++;
+            }
+            i = 1;
+            while (x + i < this.cols) {
+                if (this.cells[x + i][y].value === currentCell.value) {
+                    count++;
+                } else if (this.cells[x + i][y].value !== currentCell.value && this.cells[x + i][y].value !== '') {
+                    isBlockBack = true;
+                }
+                i++;
+            }
+            isBlockTwoHead = isBlockFront && isBlockBack;
+            this.endGame(isBlockTwoHead,count, player);
+            //check left diagonal
+            count = 1;
+            i = 1;
+            while (x - i >= 0 && y - i >= 0) {
+                if (this.cells[x - i][y - i].value === currentCell.value) {
+                    count++;
+                } else if (this.cells[x - i][y - i].value !== currentCell.value && this.cells[x - i][y - i].value !== '') {
+                    isBlockFront = true;
+                }
+                i++;
+            }
+            i = 1;
+            while (x + i < this.cols && y + i < this.cols) {
+                if (this.cells[x + i][y + i].value === currentCell.value) {
+                    count++;
+                } else if (this.cells[x + i][y + i].value !== currentCell.value && this.cells[x + i][y + i].value !== '') {
+                    isBlockBack = true;
+                }
+                i++;
+            }
+            isBlockTwoHead = isBlockFront && isBlockBack;
+            this.endGame(isBlockTwoHead,count, player);
+            //check right diagonal
+            count = 1;
+            i = 1;
+            while (x - i >= 0 && y + i < this.cols) {
+                if (this.cells[x - i][y + i].value === currentCell.value) {
+                    count++;
+                } else if (this.cells[x - i][y + i].value !== currentCell.value && this.cells[x - i][y + i].value !== '') {
+                    isBlockFront = true;
+                }
+                i++;
+            }
+            i = 1;
+            while (x + i < this.cols && y - i >= 0) {
+                if (this.cells[x + i][y - i].value === currentCell.value) {
+                    count++;
+                } else if (this.cells[x + i][y - i].value !== currentCell.value && this.cells[x + i][y - i].value !== '') {
+                    isBlockBack = true;
+                }
+                i++;
+            }
+            isBlockTwoHead = isBlockFront && isBlockBack;
+            this.endGame(isBlockTwoHead,count, player);
+        };
+        this.endGame = function (isBlockTwoHead,count, player) {
+            if (count >= WIN) {
+                if (!isBlockTwoHead) {
+                    alert(player + ' win!!');
+                    this.win=true;
+                }else this.win=false;
+            }else this.win=false;
+        }
+
+    };
+    let game = new GameBoard(ROWS, COLUMNS);
+    game.draw();
+
+    function play(x, y) {
+        game.play(x, y);
+    }
+
+    function start() {
+
+    }
+</script>
+</body>
+</html>
